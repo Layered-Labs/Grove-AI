@@ -258,16 +258,19 @@ export default function Chat() {
           </Button>
           <div className="flex-1" />
           <div className="flex items-center gap-3">
-            {loadedModel && (
+            {loadedModel && !isOffline && (
               <div className="hidden sm:flex items-center gap-1.5" style={{ color: '#a8a29e' }}>
                 <Lock className="h-3 w-3" />
                 <span className="text-xs">Running on your device</span>
               </div>
             )}
-            {isOffline && (
-              <div className="flex items-center gap-1.5" style={{ color: '#a8a29e' }}>
+            {isOffline && loadedModel && (
+              <div
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium"
+                style={{ background: '#fee2e2', color: '#991b1b' }}
+              >
                 <WifiOff className="h-3 w-3" />
-                <span className="text-xs hidden sm:inline">Offline</span>
+                <span>Offline and running</span>
               </div>
             )}
           </div>
