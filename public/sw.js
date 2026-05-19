@@ -1,4 +1,4 @@
-const CACHE = 'groveai-v2'
+const CACHE = 'groveai-v3'
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -23,7 +23,7 @@ self.addEventListener('fetch', (event) => {
   // Only handle same-origin GET requests
   if (request.method !== 'GET' || url.origin !== self.location.origin) return
 
-  // _next/static assets are content-hashed — cache first, they never change
+  // _next/static assets are content-hashed - cache first, they never change
   if (url.pathname.startsWith('/_next/static/')) {
     event.respondWith(
       caches.match(request).then(

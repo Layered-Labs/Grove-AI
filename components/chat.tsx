@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, KeyboardEvent } from 'react'
-import { ArrowUp, Loader2, PanelLeft } from 'lucide-react'
+import { ArrowUp, Loader2, PanelLeft, WifiOff, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Progress } from '@/components/ui/progress'
@@ -22,18 +22,17 @@ export type Conversation = {
   createdAt: number
 }
 
-const MODEL_ID = 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC'
+const MODEL_PRIMARY = 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC'
+const MODEL_FALLBACK = 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC'
 const STORAGE_KEY = 'groveai_conversations'
 
 const SYSTEM_PROMPT: ChatMessage = {
   role: 'system' as const,
-  content: `You are GroveAI, a health information assistant built to make medical knowledge accessible to everyone — especially families and communities with limited access to healthcare.
+  content: `You are GroveAI, a warm and knowledgeable health companion for families and communities who don't always have easy access to a doctor.
 
-Speak in plain, warm, easy-to-understand English. Never use medical jargon without immediately explaining what it means. Be empathetic, direct, and genuinely helpful.
+Speak in plain, easy-to-understand English. Never use medical jargon without immediately explaining what it means. Be empathetic, direct, and genuinely helpful.
 
-When someone asks about symptoms, medications, or health decisions, give them useful, honest information. Always remind them to follow their healthcare provider's advice for personal medical decisions, and tell them clearly when something sounds serious enough to seek immediate care.
-
-You exist to bridge the gap for people who don't have easy access to a doctor. Treat every question with care and respect.`,
+When someone asks about symptoms, medications, or health decisions, give them useful and honest information. If something sounds serious, say so clearly and gently. Always encourage them to follow up with a healthcare provider for personal medical decisions.`,
 }
 
 const SUGGESTIONS = [
@@ -63,25 +62,57 @@ export default function Chat() {
   const [engine, setEngine] = useState<any>(null)
   const [loadProgress, setLoadProgress] = useState(0)
   const [loadText, setLoadText] = useState('Initializing...')
+  const [loadedModel, setLoadedModel] = useState<'1.5B' | '0.5B' | null>(null)
   const [status, setStatus] = useState<'loading' | 'ready' | 'generating'>('loading')
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const [isOffline, setIsOffline] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     setConversations(loadConversations())
+
+    const mq = window.matchMedia('(max-width: 768px)')
+    setIsMobile(mq.matches)
+    setSidebarOpen(!mq.matches)
+    const mqHandler = (e: MediaQueryListEvent) => {
+      setIsMobile(e.matches)
+      if (e.matches) setSidebarOpen(false)
+    }
+    mq.addEventListener('change', mqHandler)
+
+    setIsOffline(!navigator.onLine)
+    const onOnline = () => setIsOffline(false)
+    const onOffline = () => setIsOffline(true)
+    window.addEventListener('online', onOnline)
+    window.addEventListener('offline', onOffline)
+
+    return () => {
+      mq.removeEventListener('change', mqHandler)
+      window.removeEventListener('online', onOnline)
+      window.removeEventListener('offline', onOffline)
+    }
   }, [])
 
   useEffect(() => {
     const init = async () => {
       const webllm = await import('@mlc-ai/web-llm')
-      const e = await webllm.CreateMLCEngine(MODEL_ID, {
-        initProgressCallback: (p: any) => {
-          setLoadProgress(Math.round(p.progress * 100))
-          setLoadText(p.text)
-        },
-      })
-      setEngine(e)
+      const callback = (p: any) => {
+        setLoadProgress(Math.round(p.progress * 100))
+        setLoadText(p.text)
+      }
+      try {
+        const e = await webllm.CreateMLCEngine(MODEL_PRIMARY, { initProgressCallback: callback })
+        setEngine(e)
+        setLoadedModel('1.5B')
+      } catch {
+        setLoadProgress(0)
+        setLoadText('Switching to lighter model...')
+        const e = await webllm.CreateMLCEngine(MODEL_FALLBACK, { initProgressCallback: callback })
+        setEngine(e)
+        setLoadedModel('0.5B')
+      }
       setStatus('ready')
     }
     init()
@@ -166,31 +197,45 @@ export default function Chat() {
 
   if (status === 'loading') {
     return (
-      <div className="flex flex-col items-center justify-center h-screen gap-4 px-8">
-        <p className="text-sm text-muted-foreground text-center max-w-xs leading-relaxed">
-          {loadText}
+      <div className="flex flex-col items-center justify-center h-screen gap-6 px-8">
+        <Wordmark className="text-3xl" />
+        <div className="w-64 space-y-3 text-center">
+          <Progress value={loadProgress} className="h-[2px] rounded-none" style={{ background: '#e7e0d8' }} />
+          <p className="text-xs leading-relaxed" style={{ color: '#78716c' }}>{loadText}</p>
+        </div>
+        <p className="text-[11px] text-center max-w-xs" style={{ color: '#a8a29e' }}>
+          This only happens once - your information stays on your device.<br />
+          Best on Google Chrome or Microsoft Edge.
         </p>
-        <Progress value={loadProgress} className="w-72 h-1.5" />
-        <p className="text-xs text-muted-foreground/50">This only happens once - your information stays on your device</p>
       </div>
     )
   }
 
   return (
     <div className="flex h-screen overflow-hidden">
+      {/* Mobile sidebar backdrop */}
+      {isMobile && sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <div
         className={cn(
-          'border-r border-border/50 bg-muted/20 flex-shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out',
-          sidebarOpen ? 'w-64' : 'w-0'
+          'border-r border-border/50 bg-background flex-shrink-0 overflow-hidden transition-[width,transform] duration-200 ease-in-out',
+          isMobile
+            ? cn('fixed inset-y-0 left-0 z-50 w-64 shadow-xl', sidebarOpen ? 'translate-x-0' : '-translate-x-full')
+            : cn('relative', sidebarOpen ? 'w-64' : 'w-0')
         )}
       >
         <div className="w-64 h-full">
           <Sidebar
             conversations={conversations}
             activeId={activeId}
-            onNew={() => { setActiveId(null); setInput('') }}
-            onSelect={setActiveId}
+            onNew={() => { setActiveId(null); setInput(''); if (isMobile) setSidebarOpen(false) }}
+            onSelect={(id) => { setActiveId(id); if (isMobile) setSidebarOpen(false) }}
             onDelete={(id) => {
               updateConversations(conversations.filter((c) => c.id !== id))
               if (activeId === id) setActiveId(null)
@@ -202,39 +247,67 @@ export default function Chat() {
       {/* Main */}
       <div className="flex flex-col flex-1 min-w-0">
         {/* Header */}
-        <div className="flex items-center gap-2 px-4 py-3.5">
+        <div className="flex items-center gap-2 px-6 py-3">
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 flex-shrink-0"
+            className="h-7 w-7 flex-shrink-0"
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
             <PanelLeft className="h-4 w-4" />
           </Button>
-          <div className="flex-1 flex justify-center">
-            <Wordmark className="text-base" />
+          <div className="flex-1" />
+          <div className="flex items-center gap-3">
+            {loadedModel && (
+              <div className="hidden sm:flex items-center gap-1.5" style={{ color: '#a8a29e' }}>
+                <Lock className="h-3 w-3" />
+                <span className="text-xs">Running on your device</span>
+              </div>
+            )}
+            {isOffline && (
+              <div className="flex items-center gap-1.5" style={{ color: '#a8a29e' }}>
+                <WifiOff className="h-3 w-3" />
+                <span className="text-xs hidden sm:inline">Offline</span>
+              </div>
+            )}
           </div>
-          <div className="h-8 w-8 flex-shrink-0" />
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-8">
-          <div className="max-w-3xl mx-auto">
+        <div className="flex-1 overflow-y-auto px-6 py-10">
+          <div className="max-w-2xl mx-auto">
             {currentMessages.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-[55vh] gap-6 text-center">
-                <div className="space-y-2">
-                  <h2 className="text-3xl font-semibold tracking-tight">Ask me anything about your health.</h2>
+              <div className="flex flex-col justify-center min-h-[50vh] gap-10">
+                <div>
+                  <h2
+                    className="font-[family-name:var(--font-playfair)] text-3xl font-bold leading-tight mb-2"
+                    style={{ color: '#1c1917' }}
+                  >
+                    What would you like<br />to know today?
+                  </h2>
+                  <p className="text-xs" style={{ color: '#78716c' }}>
+                    Free health information, running privately on your device.
+                  </p>
                 </div>
-                <div className="grid grid-cols-2 gap-2 w-full max-w-xl mt-2">
-                  {SUGGESTIONS.map((s) => (
+                <div className="space-y-1">
+                  {SUGGESTIONS.map((s, i) => (
                     <button
                       key={s}
                       onClick={() => sendMessage(s)}
-                      className="text-left text-sm px-4 py-3 rounded-xl border border-border hover:bg-muted transition-colors leading-snug text-muted-foreground hover:text-foreground"
+                      className="group flex items-start gap-4 w-full text-left py-3 border-t transition-colors duration-150 hover:opacity-70"
+                      style={{ borderColor: '#e7e0d8' }}
                     >
-                      {s}
+                      <span className="text-xs mt-0.5 font-mono flex-shrink-0" style={{ color: '#14532d' }}>
+                        0{i + 1}
+                      </span>
+                      <span className="text-sm leading-snug" style={{ color: '#44403c' }}>{s}</span>
+                      <ArrowUp
+                        className="ml-auto h-3.5 w-3.5 flex-shrink-0 mt-0.5 rotate-45 opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ color: '#14532d' }}
+                      />
                     </button>
                   ))}
+                  <div className="border-t" style={{ borderColor: '#e7e0d8' }} />
                 </div>
               </div>
             )}
@@ -246,37 +319,39 @@ export default function Chat() {
         </div>
 
         {/* Input */}
-        <div className="px-4 pb-6 pt-2">
-          <div className="max-w-3xl mx-auto">
-            <div className="relative rounded-2xl border border-border bg-background shadow-sm focus-within:border-foreground/25 transition-colors duration-150">
+        <div className="px-6 pb-6 pt-2">
+          <div className="max-w-2xl mx-auto">
+            <div
+              className="relative rounded-xl bg-white transition-colors duration-150"
+              style={{ border: '1px solid #ddd8d0' }}
+            >
               <Textarea
                 ref={textareaRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Message GroveAI..."
+                placeholder="Ask a health question..."
                 rows={1}
-                className="resize-none border-0 shadow-none focus-visible:ring-0 text-base px-4 pt-3.5 pb-12 min-h-0 bg-transparent leading-relaxed"
+                className="resize-none border-0 shadow-none focus-visible:ring-0 text-sm px-4 pt-3.5 pb-12 min-h-0 bg-transparent leading-relaxed placeholder:text-stone-400"
+                style={{ color: '#1c1917' }}
                 disabled={status === 'generating'}
               />
               <div className="absolute bottom-3 right-3">
-                <Button
+                <button
                   onClick={send}
                   disabled={!input.trim() || status === 'generating'}
-                  size="icon"
-                  className="h-8 w-8 rounded-xl"
+                  className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full transition-all duration-150 disabled:opacity-30"
+                  style={{ background: '#14532d', color: '#ffffff' }}
                 >
                   {status === 'generating' ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-3 w-3 animate-spin" />
                   ) : (
-                    <ArrowUp className="h-4 w-4" />
+                    <ArrowUp className="h-3 w-3" />
                   )}
-                </Button>
+                  {status === 'generating' ? 'Thinking' : 'Send'}
+                </button>
               </div>
             </div>
-            <p className="text-xs text-center text-muted-foreground/40 mt-3">
-              Your health questions stay private, nothing leaves your device. For personal medical decisions, always follow your provider's advice.
-            </p>
           </div>
         </div>
       </div>

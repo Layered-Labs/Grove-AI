@@ -20,11 +20,16 @@ export default function BrowserCheck() {
           <span className="font-semibold text-base">Browser not supported</span>
         </div>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          GroveAI runs the AI model directly on your device using WebGPU, which isn't available in your browser yet.
+          GroveAI runs entirely on your device using WebGPU - no data is ever sent anywhere. Your browser doesn't support WebGPU yet.
         </p>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          Please open this page in <span className="font-medium text-foreground">Google Chrome</span> or <span className="font-medium text-foreground">Microsoft Edge</span> (version 113 or newer).
-        </p>
+        <div className="text-sm text-muted-foreground leading-relaxed space-y-1">
+          <p className="font-medium text-foreground">Supported browsers:</p>
+          <ul className="list-disc list-inside space-y-0.5">
+            <li>Google Chrome (desktop + Android)</li>
+            <li>Microsoft Edge (desktop)</li>
+            <li>version 113 or newer</li>
+          </ul>
+        </div>
         <a
           href="https://www.google.com/chrome/"
           target="_blank"
