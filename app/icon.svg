@@ -1,13 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="120" fill="#0a0a0a"/>
+  <rect width="512" height="512" rx="100" fill="#e8d5b7"/>
   <text
     x="256"
-    y="358"
+    y="370"
     font-family="Georgia, 'Times New Roman', serif"
-    font-size="310"
+    font-size="320"
     font-weight="700"
-    font-style="italic"
-    fill="#008000"
+    fill="#1c1917"
     text-anchor="middle"
   >G</text>
 </svg>
