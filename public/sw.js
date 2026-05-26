@@ -1,4 +1,4 @@
-const CACHE = 'groveai-v3'
+const CACHE = 'groveai-v4'
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

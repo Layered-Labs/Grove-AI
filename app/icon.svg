@@ -1,12 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="100" fill="#e8d5b7"/>
-  <text
-    x="256"
-    y="370"
-    font-family="Georgia, 'Times New Roman', serif"
-    font-size="320"
-    font-weight="700"
-    fill="#1c1917"
-    text-anchor="middle"
-  >G</text>
+<svg width="500" height="500" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="500" height="500" rx="50" fill="#E8D5B8"/>
+<rect x="156.531" y="92.1523" width="185.938" height="315.625" fill="#E8D5B8"/>
+<path d="M176.844 407.777V366.762V315.98V220.613C176.844 180.778 201.039 144.936 237.984 130.041L287.391 110.121" stroke="#1B1917" stroke-width="39.0625"/>
+<path d="M231.922 407.777V312.465V224.613C231.922 204.724 243.986 186.822 262.42 179.356L314.734 158.168" stroke="#1B1917" stroke-width="39.0625"/>
+<path d="M287.577 407.973L285.047 306.605V244.436C285.047 234.532 290.985 225.592 300.114 221.752L334.266 207.387" stroke="#1B1917" stroke-width="39.0625"/>
 </svg>

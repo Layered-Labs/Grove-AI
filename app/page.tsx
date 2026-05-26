@@ -2,8 +2,8 @@
 
 import dynamic from 'next/dynamic'
 
-const Chat = dynamic(() => import('@/components/chat'), { ssr: false })
+const Landing = dynamic(() => import('@/components/landing'), { ssr: false })
 
 export default function Home() {
-  return <Chat />
+  return <Landing />
 }

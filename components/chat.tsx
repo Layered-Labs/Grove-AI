@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
+import { getEngine, subscribeProgress } from '@/lib/engine'
 import Message from './message'
 import Sidebar from './sidebar'
 import Wordmark from './wordmark'
@@ -22,8 +23,6 @@ export type Conversation = {
   createdAt: number
 }
 
-const MODEL_PRIMARY = 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC'
-const MODEL_FALLBACK = 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC'
 const STORAGE_KEY = 'groveai_conversations'
 
 const SYSTEM_PROMPT: ChatMessage = {
@@ -62,7 +61,6 @@ export default function Chat() {
   const [engine, setEngine] = useState<any>(null)
   const [loadProgress, setLoadProgress] = useState(0)
   const [loadText, setLoadText] = useState('Initializing...')
-  const [loadedModel, setLoadedModel] = useState<'1.5B' | '0.5B' | null>(null)
   const [status, setStatus] = useState<'loading' | 'ready' | 'generating'>('loading')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
@@ -96,26 +94,15 @@ export default function Chat() {
   }, [])
 
   useEffect(() => {
-    const init = async () => {
-      const webllm = await import('@mlc-ai/web-llm')
-      const callback = (p: any) => {
-        setLoadProgress(Math.round(p.progress * 100))
-        setLoadText(p.text)
-      }
-      try {
-        const e = await webllm.CreateMLCEngine(MODEL_PRIMARY, { initProgressCallback: callback })
-        setEngine(e)
-        setLoadedModel('1.5B')
-      } catch {
-        setLoadProgress(0)
-        setLoadText('Switching to lighter model...')
-        const e = await webllm.CreateMLCEngine(MODEL_FALLBACK, { initProgressCallback: callback })
-        setEngine(e)
-        setLoadedModel('0.5B')
-      }
+    const unsub = subscribeProgress((p, t) => {
+      setLoadProgress(p)
+      setLoadText(t)
+    })
+    getEngine().then((e) => {
+      setEngine(e)
       setStatus('ready')
-    }
-    init()
+    })
+    return unsub
   }, [])
 
   const currentMessages = conversations.find((c) => c.id === activeId)?.messages ?? []
@@ -163,27 +150,40 @@ export default function Chat() {
     )
     updateConversations(withPlaceholder)
 
-    const stream = await engine.chat.completions.create({
-      messages: [SYSTEM_PROMPT, ...history],
-      stream: true,
-    })
+    try {
+      const stream = await engine.chat.completions.create({
+        messages: [SYSTEM_PROMPT, ...history],
+        stream: true,
+      })
 
-    let content = ''
-    for await (const chunk of stream) {
-      content += chunk.choices[0]?.delta?.content ?? ''
+      let content = ''
+      for await (const chunk of stream) {
+        content += chunk.choices[0]?.delta?.content ?? ''
+        setConversations((prev) => {
+          const next = prev.map((c) =>
+            c.id === convId
+              ? { ...c, messages: [...history, { role: 'assistant' as const, content }] }
+              : c
+          )
+          saveConversations(next)
+          return next
+        })
+      }
+    } catch (err) {
+      console.error('Inference error:', err)
       setConversations((prev) => {
         const next = prev.map((c) =>
           c.id === convId
-            ? { ...c, messages: [...history, { role: 'assistant' as const, content }] }
+            ? { ...c, messages: [...history, { role: 'assistant' as const, content: 'Something went wrong. Please try again.' }] }
             : c
         )
         saveConversations(next)
         return next
       })
+    } finally {
+      setStatus('ready')
+      textareaRef.current?.focus()
     }
-
-    setStatus('ready')
-    textareaRef.current?.focus()
   }
 
   const send = () => sendMessage(input)
@@ -258,13 +258,13 @@ export default function Chat() {
           </Button>
           <div className="flex-1" />
           <div className="flex items-center gap-3">
-            {loadedModel && !isOffline && (
+            {status === 'ready' && !isOffline && (
               <div className="hidden sm:flex items-center gap-1.5" style={{ color: '#a8a29e' }}>
                 <Lock className="h-3 w-3" />
                 <span className="text-xs">Running on your device</span>
               </div>
             )}
-            {isOffline && loadedModel && (
+            {isOffline && status === 'ready' && (
               <div
                 className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium"
                 style={{ background: '#fee2e2', color: '#991b1b' }}
@@ -283,7 +283,7 @@ export default function Chat() {
               <div className="flex flex-col justify-center min-h-[50vh] gap-10">
                 <div>
                   <h2
-                    className="font-[family-name:var(--font-playfair)] text-3xl font-bold leading-tight mb-2"
+                    className="text-3xl font-bold leading-tight mb-2"
                     style={{ color: '#1c1917' }}
                   >
                     What would you like<br />to know today?
