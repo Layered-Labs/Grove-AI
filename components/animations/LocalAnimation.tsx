@@ -2,8 +2,8 @@ import { useCurrentFrame, useVideoConfig, interpolate, spring } from 'remotion'
 import { BrowserChrome, ChatSidebar, ChatInput, UserBubble, AssistantBubble, APP_H, CHROME_H } from './ChatBase'
 import Wordmark from '../wordmark'
 
-const USER = "My child has a fever of 102°F. When should I go to the ER?"
-const ASSISTANT = "Go to the ER now if your child has a stiff neck, rash, trouble breathing, won't wake up, or seems very confused. Also go immediately if they're under 3 months old with any fever. For a 102°F fever in an older child who is alert and drinking fluids, you can usually manage at home with Tylenol or Motrin and monitor closely. Call your pediatrician if the fever lasts more than 2-3 days or gets worse."
+const USER = "Can you help me write a resignation email to my boss?"
+const ASSISTANT = "Happy to help. Keep it short and professional: thank them for the opportunity, state your last day (typically two weeks out), and offer to help with the transition. Skip the reasons unless you want to share them. Want me to draft the exact wording for your situation?"
 
 // LocalAnimation: shows model loading → chat ready → conversation
 // Timeline:

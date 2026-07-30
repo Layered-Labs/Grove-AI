@@ -2,8 +2,8 @@ import { useCurrentFrame, useVideoConfig, interpolate, spring } from 'remotion'
 import { BrowserChrome, ChatSidebar, ChatInput, UserBubble, AssistantBubble, APP_H } from './ChatBase'
 import { WifiOff } from 'lucide-react'
 
-const USER = "What are the warning signs of a concussion I should watch for?"
-const ASSISTANT = "Warning signs to watch for: persistent or worsening headache, confusion or feeling 'foggy', repeated vomiting, one pupil larger than the other, slurred speech, or trouble staying awake. These mean go to the ER now. Mild symptoms like a brief headache, sensitivity to light, or feeling off-balance are common and usually improve with rest over a few days."
+const USER = "My landlord won't return my deposit. What are my rights?"
+const ASSISTANT = "Most states require landlords to return your deposit (minus lawful deductions) within 14-30 days, with an itemized list if they withhold any of it. If they've missed the deadline or the deductions look unreasonable, send a written demand letter first. If that doesn't work, small claims court is usually fast and doesn't require a lawyer. Want help drafting that letter?"
 
 // OfflineAnimation: UI shown → wifi disconnects → offline pill → conversation works anyway
 // Timeline:

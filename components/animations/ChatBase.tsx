@@ -31,7 +31,7 @@ export function BrowserChrome({ rightSlot }: { rightSlot?: React.ReactNode }) {
 }
 
 export function ChatSidebar({ active = 0 }: { active?: number }) {
-  const convos = ['Fever question', 'Blood pressure meds', 'Concussion signs']
+  const convos = ['Resignation email', 'Compound interest', 'Landlord deposit']
   return (
     <div style={{
       width: SIDEBAR_W, height: APP_H, flexShrink: 0,
@@ -65,7 +65,7 @@ export function ChatInput() {
   return (
     <div style={{ padding: '0 16px 16px' }}>
       <div style={{ background: '#faf8f5', border: '1px solid #ddd8d0', borderRadius: 10, padding: '11px 14px', fontSize: 13, color: '#c0b9b0' }}>
-        Ask a health question...
+        Ask anything...
       </div>
     </div>
   )

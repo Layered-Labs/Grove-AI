@@ -232,10 +232,10 @@ export default function Landing() {
             fontWeight: 700, lineHeight: 1.05, letterSpacing: '-0.025em',
             color: '#1c1917', marginBottom: '24px',
           }}>
-            Health answers<br />that never leave<br />your device.
+            AI that never<br />leaves<br />your device.
           </h1>
           <p style={{ fontSize: '17px', lineHeight: 1.7, color: '#78716c', marginBottom: '40px', maxWidth: '460px' }}>
-            GroveAI is a free AI health companion that runs entirely in your browser. No servers, no data collected, works offline.
+            GroveAI is a free AI assistant that runs entirely in your browser. No servers, no data collected, works offline.
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
             <CtaButton ready={ready} progress={progress} onClick={goToChat} />
@@ -256,7 +256,7 @@ export default function Landing() {
         <Feature
           eyebrow="Offline"
           title="Works with no internet."
-          description="Once loaded, GroveAI works anywhere: in areas with no signal, on a plane, at a rural clinic. No connection required."
+          description="Once loaded, GroveAI works anywhere: in areas with no signal, on a plane, or anywhere else you're offline. No connection required."
           variant="offline"
           bgImage="https://images.unsplash.com/photo-1752316226345-ee94709ef61f?q=80&w=1031&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
         />

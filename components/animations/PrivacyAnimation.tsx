@@ -1,8 +1,8 @@
 import { useCurrentFrame, useVideoConfig, interpolate, spring } from 'remotion'
 import { BrowserChrome, ChatSidebar, ChatInput, UserBubble, AssistantBubble, APP_H } from './ChatBase'
 
-const USER = "I've been taking lisinopril for blood pressure. Is it safe to take ibuprofen?"
-const ASSISTANT = "Taking ibuprofen with lisinopril can reduce how well your blood pressure medication works and may also strain your kidneys over time. For occasional pain, acetaminophen (Tylenol) is generally the safer choice. If you need ibuprofen regularly, check with your doctor, as they may want to adjust your dose or monitor your blood pressure more closely."
+const USER = "Explain how compound interest works, like I'm new to it."
+const ASSISTANT = "You earn interest not just on your original amount, but on the interest you've already earned. Put in $1,000 at 5% a year, and after year one you have $1,050. Year two, you earn 5% on the full $1,050, not just the original $1,000. Over decades, that snowballing is why starting early matters more than starting with a lot."
 
 // PrivacyAnimation: chat UI appears, lock badge pulses, conversation flows
 // Timeline:

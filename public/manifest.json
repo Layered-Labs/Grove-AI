@@ -1,7 +1,7 @@
 {
   "name": "GroveAI",
   "short_name": "GroveAI",
-  "description": "Free, private health information for everyone.",
+  "description": "Free, private AI for everyone.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

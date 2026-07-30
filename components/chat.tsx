@@ -27,18 +27,18 @@ const STORAGE_KEY = 'groveai_conversations'
 
 const SYSTEM_PROMPT: ChatMessage = {
   role: 'system' as const,
-  content: `You are GroveAI, a warm and knowledgeable health companion for families and communities who don't always have easy access to a doctor.
+  content: `You are GroveAI, a warm and knowledgeable AI assistant for people who don't always have easy access to expert help.
 
-Speak in plain, easy-to-understand English. Never use medical jargon without immediately explaining what it means. Be empathetic, direct, and genuinely helpful.
+Speak in plain, easy-to-understand English. Never use jargon without immediately explaining what it means. Be empathetic, direct, and genuinely helpful.
 
-When someone asks about symptoms, medications, or health decisions, give them useful and honest information. If something sounds serious, say so clearly and gently. Always encourage them to follow up with a healthcare provider for personal medical decisions.`,
+Give useful and honest answers across any topic someone brings up, whether that's writing, learning, everyday decisions, or something more personal. If something requires a licensed professional (medical, legal, financial), say so clearly and gently, and encourage them to follow up with one for anything that needs it.`,
 }
 
 const SUGGESTIONS = [
-  'My child has a fever of 102°F. When should I go to the ER?',
-  'What are the side effects of metformin?',
-  'Can I take ibuprofen with my blood pressure medication?',
-  'How do I know if a cut needs stitches?',
+  'Can you help me write a resignation email to my boss?',
+  'Explain how compound interest works, like I\'m new to it.',
+  'My landlord won\'t return my deposit. What are my rights?',
+  'Give me a recipe using what\'s in my fridge.',
 ]
 
 function loadConversations(): Conversation[] {
@@ -289,7 +289,7 @@ export default function Chat() {
                     What would you like<br />to know today?
                   </h2>
                   <p className="text-xs" style={{ color: '#78716c' }}>
-                    Free health information, running privately on your device.
+                    Free AI, running privately on your device.
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -333,7 +333,7 @@ export default function Chat() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask a health question..."
+                placeholder="Ask anything..."
                 rows={1}
                 className="resize-none border-0 shadow-none focus-visible:ring-0 text-sm px-4 pt-3.5 pb-12 min-h-0 bg-transparent leading-relaxed placeholder:text-stone-400"
                 style={{ color: '#1c1917' }}

@@ -11,7 +11,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "GroveAI",
-  description: "Free, private health information for everyone.",
+  description: "Free, private AI for everyone.",
   manifest: "/manifest.json",
 };
 
