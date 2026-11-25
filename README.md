@@ -1,36 +1,28 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Grove
 
-## Getting Started
+A free assistant that runs on your own device. A Layered Labs experiment, live at https://grove.layeredlabs.ai.
 
-First, run the development server:
+- The model (Qwen2.5 0.5B Instruct, through WebLLM) runs in the browser on WebGPU. Messages never leave the device.
+- After the first download it works offline. Chats are saved in the browser's own storage.
+- Next.js, plain CSS. Headlines in Fraunces, interface in Hanken Grotesk.
+
+## Develop
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Deploy
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The org repo is private and cannot be git-connected on the Hobby plan, so deploy with the CLI from this folder:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+vercel deploy --prod --yes
+```
 
-## Learn More
+Bump the cache name in `public/sw.js` (`grove-shell-vN`) whenever shell files change.
 
-To learn more about Next.js, take a look at the following resources:
+## Brand
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Logo masters are in `brand/logo/`: the symbol, the two-arch small cut for sizes under 32 px, and the app icon. The mark is three nested arches in one colour, Grove green `#0B6B43` on light, cream `#FFF4D9` on green.

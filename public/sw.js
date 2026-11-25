@@ -1,8 +1,8 @@
-const CACHE = 'groveai-v4'
+const CACHE = 'grove-shell-v5'
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(['/', '/manifest.json']))
+    caches.open(CACHE).then((cache) => cache.addAll(['/', '/manifest.webmanifest']))
   )
   self.skipWaiting()
 })
