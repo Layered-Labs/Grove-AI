@@ -43,8 +43,9 @@ svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; 
 .center { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 22px; }
 
 h1 {
-  margin: 0; font-family: var(--font-head), Georgia, serif; font-weight: 600;
-  font-size: clamp(46px, 8vw, 68px); line-height: 1; letter-spacing: -0.03em;
+  margin: 0; font-family: var(--font-head), Georgia, serif; font-weight: 400;
+  font-size: clamp(48px, 8.5vw, 72px); line-height: 1.02; letter-spacing: -0.025em;
+  font-variation-settings: "opsz" 72;
 }
 h1.h2 { font-size: clamp(38px, 5.5vw, 52px); line-height: 1.04; }
 h2 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
@@ -52,7 +53,7 @@ h2 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
 .note { margin: 0; color: var(--muted); font-size: 17px; }
 
 /* The mark. Arches are separate paths and fade in from the top arch down. */
-.mark { color: var(--accent); stroke: currentColor; }
+.mark { color: var(--accent); stroke: currentColor; stroke-linecap: butt; stroke-linejoin: miter; }
 .mark path { animation: arch-in .8s cubic-bezier(.2, .7, .2, 1) both; }
 .mark path:nth-child(2) { animation-delay: .2s; }
 .mark path:nth-child(3) { animation-delay: .4s; }
@@ -84,6 +85,15 @@ h2 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
 }
 .icon-btn svg { width: 22px; height: 22px; }
 .icon-btn.plain { background: transparent; color: var(--muted); }
+.tool-btn {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px;
+  border: 1px solid var(--field-line); border-radius: 10px; background: #fff; color: var(--ink);
+  font-size: 15px; font-weight: 500; letter-spacing: -0.005em;
+  transition: border-color .15s ease, background .15s ease;
+}
+.tool-btn svg { width: 18px; height: 18px; stroke-width: 1.75; color: var(--muted); }
+.tool-btn:hover { border-color: var(--ink); background: #fafaf8; }
+.tool-btn:disabled { opacity: .45; cursor: default; border-color: var(--line); background: #fff; }
 .link-btn { border: 0; background: none; padding: 0; color: var(--accent); font-weight: 700; text-decoration: underline; }
 
 /* Model download strip. A finished download shows a check, not a full bar. */
@@ -155,6 +165,19 @@ textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3
 .send svg { width: 24px; height: 24px; stroke-width: 2.5; }
 .send:disabled { opacity: .35; cursor: default; }
 .foot { margin: 0; text-align: center; font-size: 14px; color: var(--muted); }
+
+/* Model tag and details */
+.model-chip {
+  display: inline-flex; align-items: center; gap: 10px; align-self: flex-start; min-height: 40px; padding: 0 12px;
+  border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--body);
+}
+.model-chip:hover { border-color: var(--field-line); }
+.model-chip .tag, .specs .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13.5px; }
+.model-chip .more { font-size: 14px; color: var(--accent); font-weight: 500; }
+.specs { display: grid; grid-template-columns: auto 1fr; gap: 12px 24px; margin: 0; }
+.specs dt { color: var(--muted); font-size: 16px; }
+.specs dd { margin: 0; font-size: 17px; overflow-wrap: anywhere; }
+.foot-row { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
 
 /* History */
 dialog { border: 0; padding: 0; border-radius: 20px; width: min(520px, calc(100vw - 32px)); max-height: 80dvh; color: var(--ink); }

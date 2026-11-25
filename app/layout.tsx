@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Hanken_Grotesk } from "next/font/google";
+import { Newsreader, Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
 import OfflineStatus from "@/components/offline-status";
 
-// Headlines in Fraunces (upright only), interface text in Hanken Grotesk.
-const fraunces = Fraunces({ subsets: ["latin"], weight: ["600"], style: ["normal"], variable: "--font-head" });
+// Headlines in Newsreader (an editorial serif, upright only), interface text in Hanken Grotesk.
+const newsreader = Newsreader({ subsets: ["latin"], style: ["normal"], axes: ["opsz"], variable: "--font-head" });
 const hanken = Hanken_Grotesk({ subsets: ["latin"], weight: ["400", "500", "700"], variable: "--font-ui" });
 
 export const metadata: Metadata = {
@@ -22,7 +22,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${hanken.variable}`}>
+    <html lang="en" className={`${newsreader.variable} ${hanken.variable}`}>
       <body>
         {children}
         <OfflineStatus />
