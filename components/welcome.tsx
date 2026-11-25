@@ -3,7 +3,6 @@
 import { useRouter } from 'next/navigation'
 import { useEngine } from '@/lib/use-engine'
 import Mark from './mark'
-import ModelChip from './model-chip'
 import ModelStrip from './model-strip'
 import SiteHead from './site-head'
 import Unsupported from './unsupported'
@@ -16,7 +15,7 @@ export default function Welcome() {
 
   return (
     <section className="screen welcome">
-      <SiteHead />
+      <SiteHead info />
       <ModelStrip ready={ready} progress={progress} failed={failed} onRetry={retry} />
       <div className="center">
         <Mark size={72} />
@@ -26,7 +25,6 @@ export default function Welcome() {
           Privately.
         </h1>
         <p className="sub">Free. Runs on this device.</p>
-        <ModelChip />
       </div>
       <button className="btn primary" type="button" onClick={() => router.push('/chat')}>
         Start chatting

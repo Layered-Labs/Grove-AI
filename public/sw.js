@@ -1,4 +1,4 @@
-const CACHE = 'grove-shell-v7'
+const CACHE = 'grove-shell-v8'
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
