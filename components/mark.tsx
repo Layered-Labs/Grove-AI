@@ -9,7 +9,7 @@ export default function Mark({ size = 56, small = false }: { size?: number; smal
       height={size}
       fill="none"
       stroke="currentColor"
-      strokeWidth={small ? 30 : 22}
+      style={{ strokeWidth: small ? 30 : 22 }}
       aria-hidden="true"
     >
       <path d="M40 228V120A88 88 0 0 1 216 120V228" />

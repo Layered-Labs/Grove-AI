@@ -5,6 +5,7 @@ import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from 'react'
 import { getEngine } from '@/lib/engine'
 import { useEngine } from '@/lib/use-engine'
 import Message, { ChatMessage } from './message'
+import ModelChip from './model-chip'
 import ModelStrip from './model-strip'
 import { Brand } from './site-head'
 import Unsupported from './unsupported'
@@ -183,10 +184,17 @@ export default function Chat() {
           <Brand />
         </Link>
         <div className="row">
-          <button className="btn quiet small" type="button" onClick={() => historyRef.current?.showModal()}>
+          <button className="tool-btn" type="button" onClick={() => historyRef.current?.showModal()}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3 2" />
+            </svg>
             History
           </button>
-          <button className="btn quiet small" type="button" onClick={newChat} disabled={messages.length === 0}>
+          <button className="tool-btn" type="button" onClick={newChat} disabled={messages.length === 0}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
             New chat
           </button>
         </div>
@@ -232,7 +240,10 @@ export default function Chat() {
             </svg>
           </button>
         </form>
-        <p className="foot">{offline ? 'You are offline. Grove is still working.' : 'Everything stays on this device. Nothing is sent anywhere.'}</p>
+        <div className="foot-row">
+          <ModelChip />
+          <p className="foot">{offline ? 'You are offline. Grove is still working.' : 'Runs on this device. Nothing is sent anywhere.'}</p>
+        </div>
       </footer>
 
       <dialog ref={historyRef} aria-labelledby="historyTitle" onClick={(e) => e.target === historyRef.current && historyRef.current?.close()}>
