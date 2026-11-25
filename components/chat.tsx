@@ -1,33 +1,27 @@
 'use client'
 
-import { useState, useRef, useEffect, KeyboardEvent } from 'react'
-import { ArrowUp, Loader2, PanelLeft, WifiOff, Lock } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Progress } from '@/components/ui/progress'
-import { cn } from '@/lib/utils'
-import { getEngine, subscribeProgress } from '@/lib/engine'
-import Message from './message'
-import Sidebar from './sidebar'
-import Wordmark from './wordmark'
+import Link from 'next/link'
+import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from 'react'
+import { getEngine } from '@/lib/engine'
+import { useEngine } from '@/lib/use-engine'
+import Message, { ChatMessage } from './message'
+import ModelStrip from './model-strip'
+import { Brand } from './site-head'
+import Unsupported from './unsupported'
 
-export type ChatMessage = {
-  role: 'user' | 'assistant' | 'system'
-  content: string
-}
-
-export type Conversation = {
+type Conversation = {
   id: string
   title: string
   messages: ChatMessage[]
   createdAt: number
 }
 
-const STORAGE_KEY = 'groveai_conversations'
+const STORAGE_KEY = 'grove_conversations'
+const OLD_STORAGE_KEY = 'groveai_conversations'
 
 const SYSTEM_PROMPT: ChatMessage = {
-  role: 'system' as const,
-  content: `You are GroveAI, a warm and knowledgeable AI assistant for people who don't always have easy access to expert help.
+  role: 'system',
+  content: `You are Grove, a warm and knowledgeable assistant for people who don't always have easy access to expert help.
 
 Speak in plain, easy-to-understand English. Never use jargon without immediately explaining what it means. Be empathetic, direct, and genuinely helpful.
 
@@ -35,329 +29,260 @@ Give useful and honest answers across any topic someone brings up, whether that'
 }
 
 const SUGGESTIONS = [
-  'Can you help me write a resignation email to my boss?',
-  'Explain how compound interest works, like I\'m new to it.',
-  'My landlord won\'t return my deposit. What are my rights?',
-  'Give me a recipe using what\'s in my fridge.',
+  'Help me write a short email to quit my job.',
+  'Explain compound interest as if I am new to it.',
+  'What can I do if my landlord keeps my deposit?',
+  'Give me a simple dinner using eggs, rice and spinach.',
 ]
 
 function loadConversations(): Conversation[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(OLD_STORAGE_KEY)
     return raw ? JSON.parse(raw) : []
   } catch {
     return []
   }
 }
 
-function saveConversations(conversations: Conversation[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations))
+function saveConversations(list: Conversation[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
+  } catch {
+    // Storage can be full or blocked. The chat still works for this visit.
+  }
 }
 
 export default function Chat() {
+  const { progress, ready, failed, supported, retry } = useEngine()
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
   const [input, setInput] = useState('')
-  const [engine, setEngine] = useState<any>(null)
-  const [loadProgress, setLoadProgress] = useState(0)
-  const [loadText, setLoadText] = useState('Initializing...')
-  const [status, setStatus] = useState<'loading' | 'ready' | 'generating'>('loading')
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
-  const [isOffline, setIsOffline] = useState(false)
+  const [generating, setGenerating] = useState(false)
+  const [offline, setOffline] = useState(false)
+  const historyRef = useRef<HTMLDialogElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const textRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     setConversations(loadConversations())
-
-    const mq = window.matchMedia('(max-width: 768px)')
-    setIsMobile(mq.matches)
-    setSidebarOpen(!mq.matches)
-    const mqHandler = (e: MediaQueryListEvent) => {
-      setIsMobile(e.matches)
-      if (e.matches) setSidebarOpen(false)
-    }
-    mq.addEventListener('change', mqHandler)
-
-    setIsOffline(!navigator.onLine)
-    const onOnline = () => setIsOffline(false)
-    const onOffline = () => setIsOffline(true)
-    window.addEventListener('online', onOnline)
-    window.addEventListener('offline', onOffline)
-
+    setOffline(!navigator.onLine)
+    const on = () => setOffline(false)
+    const off = () => setOffline(true)
+    window.addEventListener('online', on)
+    window.addEventListener('offline', off)
     return () => {
-      mq.removeEventListener('change', mqHandler)
-      window.removeEventListener('online', onOnline)
-      window.removeEventListener('offline', onOffline)
+      window.removeEventListener('online', on)
+      window.removeEventListener('offline', off)
     }
   }, [])
 
-  useEffect(() => {
-    const unsub = subscribeProgress((p, t) => {
-      setLoadProgress(p)
-      setLoadText(t)
-    })
-    getEngine().then((e) => {
-      setEngine(e)
-      setStatus('ready')
-    })
-    return unsub
-  }, [])
-
-  const currentMessages = conversations.find((c) => c.id === activeId)?.messages ?? []
+  const current = conversations.find((c) => c.id === activeId)
+  const messages = current?.messages ?? []
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [currentMessages])
+  }, [messages])
 
-  const updateConversations = (updated: Conversation[]) => {
-    setConversations(updated)
-    saveConversations(updated)
+  // Grow the box with what is typed, up to a limit.
+  useEffect(() => {
+    const el = textRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${Math.min(el.scrollHeight, 168)}px`
+  }, [input])
+
+  const write = (next: Conversation[]) => {
+    setConversations(next)
+    saveConversations(next)
   }
 
-  const sendMessage = async (text: string) => {
-    if (!engine || !text.trim() || status === 'generating') return
+  const send = async (raw: string) => {
+    const text = raw.trim()
+    if (!ready || !text || generating) return
+    const engine = await getEngine()
 
-    const userMessage: ChatMessage = { role: 'user', content: text.trim() }
+    const userMessage: ChatMessage = { role: 'user', content: text }
     setInput('')
-    setStatus('generating')
+    setGenerating(true)
 
     let convId = activeId
-    let convList = [...conversations]
-
+    let list = [...conversations]
     if (!convId) {
-      const newConv: Conversation = {
-        id: crypto.randomUUID(),
-        title: text.trim().slice(0, 42),
-        messages: [],
-        createdAt: Date.now(),
-      }
-      convList = [newConv, ...convList]
-      convId = newConv.id
+      const created: Conversation = { id: crypto.randomUUID(), title: text.slice(0, 42), messages: [], createdAt: Date.now() }
+      list = [created, ...list]
+      convId = created.id
       setActiveId(convId)
     }
+    const id = convId
+    const history = [...(list.find((c) => c.id === id)?.messages ?? []), userMessage]
+    const withReply = (content: string) => (c: Conversation) =>
+      c.id === id ? { ...c, messages: [...history, { role: 'assistant' as const, content }] } : c
 
-    const history = [
-      ...(convList.find((c) => c.id === convId)?.messages ?? []),
-      userMessage,
-    ]
-
-    const withPlaceholder = convList.map((c) =>
-      c.id === convId
-        ? { ...c, messages: [...history, { role: 'assistant' as const, content: '' }] }
-        : c
-    )
-    updateConversations(withPlaceholder)
+    write(list.map(withReply('')))
 
     try {
-      const stream = await engine.chat.completions.create({
-        messages: [SYSTEM_PROMPT, ...history],
-        stream: true,
-      })
-
+      const stream = await engine.chat.completions.create({ messages: [SYSTEM_PROMPT, ...history], stream: true })
       let content = ''
       for await (const chunk of stream) {
         content += chunk.choices[0]?.delta?.content ?? ''
-        setConversations((prev) => {
-          const next = prev.map((c) =>
-            c.id === convId
-              ? { ...c, messages: [...history, { role: 'assistant' as const, content }] }
-              : c
-          )
-          saveConversations(next)
-          return next
-        })
+        const snapshot = content
+        setConversations((prev) => prev.map(withReply(snapshot)))
       }
-    } catch (err) {
-      console.error('Inference error:', err)
       setConversations((prev) => {
-        const next = prev.map((c) =>
-          c.id === convId
-            ? { ...c, messages: [...history, { role: 'assistant' as const, content: 'Something went wrong. Please try again.' }] }
-            : c
-        )
+        const next = prev.map(withReply(content))
         saveConversations(next)
         return next
       })
+    } catch (err) {
+      console.error('Inference error:', err)
+      write(list.map(withReply('Something went wrong. Please try again.')))
     } finally {
-      setStatus('ready')
-      textareaRef.current?.focus()
+      setGenerating(false)
+      textRef.current?.focus()
     }
   }
 
-  const send = () => sendMessage(input)
+  const onSubmit = (e: FormEvent) => {
+    e.preventDefault()
+    void send(input)
+  }
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+  const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      send()
+      void send(input)
     }
   }
 
-  if (status === 'loading') {
+  const newChat = () => {
+    setActiveId(null)
+    setInput('')
+  }
+
+  if (!supported) return <Unsupported />
+
+  if (!ready) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen gap-6 px-8">
-        <Wordmark className="text-3xl" />
-        <div className="w-64 space-y-3 text-center">
-          <Progress value={loadProgress} className="h-[2px] rounded-none" style={{ background: '#e7e0d8' }} />
-          <p className="text-xs leading-relaxed" style={{ color: '#78716c' }}>{loadText}</p>
+      <section className="screen">
+        <div className="chat-top">
+          <Brand />
         </div>
-        <p className="text-[11px] text-center max-w-xs" style={{ color: '#a8a29e' }}>
-          This only happens once - your information stays on your device.<br />
-          Best on Google Chrome or Microsoft Edge.
-        </p>
-      </div>
+        <div className="center">
+          <h1>Getting Grove ready</h1>
+          <p className="sub">This happens once. It stays on this device.</p>
+          <ModelStrip ready={ready} progress={progress} failed={failed} onRetry={retry} />
+        </div>
+      </section>
     )
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Mobile sidebar backdrop */}
-      {isMobile && sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/40"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <div
-        className={cn(
-          'border-r border-border/50 bg-background flex-shrink-0 overflow-hidden transition-[width,transform] duration-200 ease-in-out',
-          isMobile
-            ? cn('fixed inset-y-0 left-0 z-50 w-64 shadow-xl', sidebarOpen ? 'translate-x-0' : '-translate-x-full')
-            : cn('relative', sidebarOpen ? 'w-64' : 'w-0')
-        )}
-      >
-        <div className="w-64 h-full">
-          <Sidebar
-            conversations={conversations}
-            activeId={activeId}
-            onNew={() => { setActiveId(null); setInput(''); if (isMobile) setSidebarOpen(false) }}
-            onSelect={(id) => { setActiveId(id); if (isMobile) setSidebarOpen(false) }}
-            onDelete={(id) => {
-              updateConversations(conversations.filter((c) => c.id !== id))
-              if (activeId === id) setActiveId(null)
-            }}
-          />
+    <section className="screen chat">
+      <div className="chat-top">
+        <Link className="brand-link" href="/" aria-label="Grove home">
+          <Brand />
+        </Link>
+        <div className="row">
+          <button className="btn quiet small" type="button" onClick={() => historyRef.current?.showModal()}>
+            History
+          </button>
+          <button className="btn quiet small" type="button" onClick={newChat} disabled={messages.length === 0}>
+            New chat
+          </button>
         </div>
       </div>
 
-      {/* Main */}
-      <div className="flex flex-col flex-1 min-w-0">
-        {/* Header */}
-        <div className="flex items-center gap-2 px-6 py-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 flex-shrink-0"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            <PanelLeft className="h-4 w-4" />
-          </Button>
-          <div className="flex-1" />
-          <div className="flex items-center gap-3">
-            {status === 'ready' && !isOffline && (
-              <div className="hidden sm:flex items-center gap-1.5" style={{ color: '#a8a29e' }}>
-                <Lock className="h-3 w-3" />
-                <span className="text-xs">Running on your device</span>
-              </div>
-            )}
-            {isOffline && status === 'ready' && (
-              <div
-                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium"
-                style={{ background: '#fee2e2', color: '#991b1b' }}
-              >
-                <WifiOff className="h-3 w-3" />
-                <span>Offline and running</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-6 py-10">
-          <div className="max-w-2xl mx-auto">
-            {currentMessages.length === 0 && (
-              <div className="flex flex-col justify-center min-h-[50vh] gap-10">
-                <div>
-                  <h2
-                    className="text-3xl font-bold leading-tight mb-2"
-                    style={{ color: '#1c1917' }}
-                  >
-                    What would you like<br />to know today?
-                  </h2>
-                  <p className="text-xs" style={{ color: '#78716c' }}>
-                    Free AI, running privately on your device.
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  {SUGGESTIONS.map((s, i) => (
-                    <button
-                      key={s}
-                      onClick={() => sendMessage(s)}
-                      className="group flex items-start gap-4 w-full text-left py-3 border-t transition-colors duration-150 hover:opacity-70"
-                      style={{ borderColor: '#e7e0d8' }}
-                    >
-                      <span className="text-xs mt-0.5 font-mono flex-shrink-0" style={{ color: '#14532d' }}>
-                        0{i + 1}
-                      </span>
-                      <span className="text-sm leading-snug" style={{ color: '#44403c' }}>{s}</span>
-                      <ArrowUp
-                        className="ml-auto h-3.5 w-3.5 flex-shrink-0 mt-0.5 rotate-45 opacity-0 group-hover:opacity-100 transition-opacity"
-                        style={{ color: '#14532d' }}
-                      />
-                    </button>
-                  ))}
-                  <div className="border-t" style={{ borderColor: '#e7e0d8' }} />
-                </div>
-              </div>
-            )}
-            {currentMessages.map((msg, i) => (
-              <Message key={i} message={msg} />
-            ))}
-            <div ref={bottomRef} />
-          </div>
-        </div>
-
-        {/* Input */}
-        <div className="px-6 pb-6 pt-2">
-          <div className="max-w-2xl mx-auto">
-            <div
-              className="relative rounded-xl bg-white transition-colors duration-150"
-              style={{ border: '1px solid #ddd8d0' }}
-            >
-              <Textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask anything..."
-                rows={1}
-                className="resize-none border-0 shadow-none focus-visible:ring-0 text-sm px-4 pt-3.5 pb-12 min-h-0 bg-transparent leading-relaxed placeholder:text-stone-400"
-                style={{ color: '#1c1917' }}
-                disabled={status === 'generating'}
-              />
-              <div className="absolute bottom-3 right-3">
-                <button
-                  onClick={send}
-                  disabled={!input.trim() || status === 'generating'}
-                  className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full transition-all duration-150 disabled:opacity-30"
-                  style={{ background: '#14532d', color: '#ffffff' }}
-                >
-                  {status === 'generating' ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <ArrowUp className="h-3 w-3" />
-                  )}
-                  {status === 'generating' ? 'Thinking' : 'Send'}
+      <main className="messages" aria-live="polite">
+        {messages.length === 0 ? (
+          <div className="empty">
+            <h1 className="h2">What would you like to know?</h1>
+            <div className="chips">
+              {SUGGESTIONS.map((s) => (
+                <button key={s} className="chip" type="button" onClick={() => void send(s)}>
+                  {s}
                 </button>
-              </div>
+              ))}
             </div>
           </div>
+        ) : (
+          messages.map((m, i) => <Message key={i} message={m} pending={generating && i === messages.length - 1} />)
+        )}
+        <div ref={bottomRef} />
+      </main>
+
+      <footer className="composer">
+        <form className="send-row" onSubmit={onSubmit}>
+          <label className="grow">
+            <span className="sr">Your message</span>
+            <textarea
+              ref={textRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={onKey}
+              rows={1}
+              placeholder="Ask anything..."
+              enterKeyHint="send"
+              disabled={generating}
+            />
+          </label>
+          <button className="send" type="submit" aria-label="Send" disabled={!input.trim() || generating}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 19V5" />
+              <path d="m5 12 7-7 7 7" />
+            </svg>
+          </button>
+        </form>
+        <p className="foot">{offline ? 'You are offline. Grove is still working.' : 'Everything stays on this device. Nothing is sent anywhere.'}</p>
+      </footer>
+
+      <dialog ref={historyRef} aria-labelledby="historyTitle" onClick={(e) => e.target === historyRef.current && historyRef.current?.close()}>
+        <div className="sheet">
+          <div className="row between">
+            <h2 id="historyTitle">Your chats</h2>
+            <button className="icon-btn plain" type="button" aria-label="Close" onClick={() => historyRef.current?.close()}>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            </button>
+          </div>
+          {conversations.length === 0 ? (
+            <p className="note">No chats yet. They are saved on this device.</p>
+          ) : (
+            <ul className="history">
+              {conversations.map((c) => (
+                <li key={c.id}>
+                  <button
+                    className="history-item"
+                    type="button"
+                    onClick={() => {
+                      setActiveId(c.id)
+                      historyRef.current?.close()
+                    }}
+                  >
+                    {c.title}
+                  </button>
+                  <button
+                    className="icon-btn plain"
+                    type="button"
+                    aria-label={`Delete ${c.title}`}
+                    onClick={() => {
+                      write(conversations.filter((x) => x.id !== c.id))
+                      if (activeId === c.id) setActiveId(null)
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M3 6h18" />
+                      <path d="M8 6V4h8v2" />
+                      <path d="m6 6 1 14h10l1-14" />
+                    </svg>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-      </div>
-    </div>
+      </dialog>
+    </section>
   )
 }

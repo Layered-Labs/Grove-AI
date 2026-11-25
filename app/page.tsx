@@ -1,9 +1,5 @@
-'use client'
-
-import dynamic from 'next/dynamic'
-
-const Landing = dynamic(() => import('@/components/landing'), { ssr: false })
+import Welcome from '@/components/welcome'
 
 export default function Home() {
-  return <Landing />
+  return <Welcome />
 }

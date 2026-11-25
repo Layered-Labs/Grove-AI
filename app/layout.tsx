@@ -1,34 +1,30 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Fraunces, Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
 import OfflineStatus from "@/components/offline-status";
-import BrowserCheck from "@/components/browser-check";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
+// Headlines in Fraunces (upright only), interface text in Hanken Grotesk.
+const fraunces = Fraunces({ subsets: ["latin"], weight: ["600"], style: ["normal"], variable: "--font-head" });
+const hanken = Hanken_Grotesk({ subsets: ["latin"], weight: ["400", "500", "700"], variable: "--font-ui" });
 
 export const metadata: Metadata = {
-  title: "GroveAI",
-  description: "Free, private AI for everyone.",
-  manifest: "/manifest.json",
+  title: "Grove: ask anything, privately",
+  description: "Grove is a free assistant that runs on your own device. No account, nothing sent anywhere, and it works offline.",
+  manifest: "/manifest.webmanifest",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: "#FFFFFF",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col font-[family-name:var(--font-inter)]">
+    <html lang="en" className={`${fraunces.variable} ${hanken.variable}`}>
+      <body>
         {children}
-        <BrowserCheck />
         <OfflineStatus />
       </body>
     </html>
