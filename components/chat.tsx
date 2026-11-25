@@ -5,7 +5,7 @@ import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from 'react'
 import { getEngine } from '@/lib/engine'
 import { useEngine } from '@/lib/use-engine'
 import Message, { ChatMessage } from './message'
-import ModelChip from './model-chip'
+import ModelInfo from './model-info'
 import ModelStrip from './model-strip'
 import { Brand } from './site-head'
 import Unsupported from './unsupported'
@@ -184,6 +184,7 @@ export default function Chat() {
           <Brand />
         </Link>
         <div className="row">
+          <ModelInfo />
           <button className="tool-btn" type="button" onClick={() => historyRef.current?.showModal()}>
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <circle cx="12" cy="12" r="9" />
@@ -240,10 +241,7 @@ export default function Chat() {
             </svg>
           </button>
         </form>
-        <div className="foot-row">
-          <ModelChip />
-          <p className="foot">{offline ? 'You are offline. Grove is still working.' : 'Runs on this device. Nothing is sent anywhere.'}</p>
-        </div>
+        <p className="foot">{offline ? 'You are offline. Grove is still working.' : 'Runs on this device. Nothing is sent anywhere.'}</p>
       </footer>
 
       <dialog ref={historyRef} aria-labelledby="historyTitle" onClick={(e) => e.target === historyRef.current && historyRef.current?.close()}>

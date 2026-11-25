@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Mark from './mark'
+import ModelInfo from './model-info'
 
 export function Brand() {
   return (
@@ -10,15 +11,18 @@ export function Brand() {
   )
 }
 
-export default function SiteHead() {
+export default function SiteHead({ info = false }: { info?: boolean }) {
   return (
     <header className="site-head">
       <Link className="brand-link" href="/" aria-label="Grove home">
         <Brand />
       </Link>
-      <a className="lab" href="https://layeredlabs.ai" target="_blank" rel="noopener">
-        A Layered Labs experiment
-      </a>
+      <div className="row">
+        <a className="lab" href="https://layeredlabs.ai" target="_blank" rel="noopener">
+          A Layered Labs experiment
+        </a>
+        {info && <ModelInfo />}
+      </div>
     </header>
   )
 }

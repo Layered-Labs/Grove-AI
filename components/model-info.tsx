@@ -3,14 +3,17 @@
 import { useRef } from 'react'
 import { MODEL_INFO as M } from '@/lib/model'
 
-// The model's name and tag, always visible, with the full details one tap away.
-export default function ModelChip() {
+// The model's details live behind one small info button, out of the way.
+export default function ModelInfo() {
   const ref = useRef<HTMLDialogElement>(null)
   return (
     <>
-      <button className="model-chip" type="button" onClick={() => ref.current?.showModal()} aria-label={`Model: ${M.name}. Show details`}>
-        <span className="tag">{M.tag}</span>
-        <span className="more">Details</span>
+      <button className="tool-btn icon" type="button" onClick={() => ref.current?.showModal()} aria-label="About the model">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 11v5" />
+          <path d="M12 8h.01" />
+        </svg>
       </button>
       <dialog ref={ref} aria-labelledby="modelTitle" onClick={(e) => e.target === ref.current && ref.current?.close()}>
         <div className="sheet">
@@ -44,7 +47,7 @@ export default function ModelChip() {
             <dd>{M.runtime}</dd>
           </dl>
           <p className="note">
-            It is a very small model, so it will get things wrong. Grove is an experiment in how well a model this size works on a device.{' '}
+            It is a very small model, so it will get things wrong. Grove explores how well a model this size works on a device.{' '}
             <a href={M.source} target="_blank" rel="noopener">
               See the files
             </a>
