@@ -51,12 +51,12 @@ h2 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
 .sub { margin: 0; font-size: 20px; color: var(--muted); }
 .note { margin: 0; color: var(--muted); font-size: 17px; }
 
-/* The mark. Arches are separate paths and fade in from left to right. */
+/* The mark. Arches are separate paths and fade in from the top arch down. */
 .mark { color: var(--accent); stroke: currentColor; }
 .mark path { animation: arch-in .8s cubic-bezier(.2, .7, .2, 1) both; }
 .mark path:nth-child(2) { animation-delay: .2s; }
 .mark path:nth-child(3) { animation-delay: .4s; }
-@keyframes arch-in { from { opacity: 0; transform: translateX(-12px); } }
+@keyframes arch-in { from { opacity: 0; transform: translateY(-12px); } }
 @media (prefers-reduced-motion: reduce) { .mark path { animation: none; } }
 
 /* Header */
